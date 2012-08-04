@@ -624,6 +624,18 @@ static int cliSendCommand(int argc, char **argv, int repeat) {
  * User interface
  *--------------------------------------------------------------------------- */
 
+static sds readAuthFile(const char *filename) {
+    FILE *fp;
+    char buf[1024];
+
+    fp = fopen(filename,"r");
+    if (!fp) return NULL;
+    fgets(buf, 1024, fp);
+    fclose(fp);
+    if (strlen(buf) > 0 && buf[strlen(buf) - 1] == '\n') buf[strlen(buf) - 1] = '\0';
+    return sdsnewlen(buf, 1024);
+}
+
 static int parseOptions(int argc, char **argv) {
     int i;
 
@@ -652,6 +664,8 @@ static int parseOptions(int argc, char **argv) {
             config.dbnum = atoi(argv[++i]);
         } else if (!strcmp(argv[i],"-a") && !lastarg) {
             config.auth = argv[++i];
+        } else if (!strcmp(argv[i],"--auth-file") && !lastarg) {
+            config.auth = readAuthFile(argv[++i]);
         } else if (!strcmp(argv[i],"--raw")) {
             config.output = OUTPUT_RAW;
         } else if (!strcmp(argv[i],"--csv")) {
@@ -706,25 +720,26 @@ static void usage() {
 "redis-cli %s\n"
 "\n"
 "Usage: redis-cli [OPTIONS] [cmd [arg [arg ...]]]\n"
-"  -h <hostname>    Server hostname (default: 127.0.0.1)\n"
-"  -p <port>        Server port (default: 6379)\n"
-"  -s <socket>      Server socket (overrides hostname and port)\n"
-"  -a <password>    Password to use when connecting to the server\n"
-"  -r <repeat>      Execute specified command N times\n"
-"  -i <interval>    When -r is used, waits <interval> seconds per command.\n"
-"                   It is possible to specify sub-second times like -i 0.1\n"
-"  -n <db>          Database number\n"
-"  -x               Read last argument from STDIN\n"
-"  -d <delimiter>   Multi-bulk delimiter in for raw formatting (default: \\n)\n"
-"  -c               Enable cluster mode (follow -ASK and -MOVED redirections)\n"
-"  --raw            Use raw formatting for replies (default when STDOUT is not a tty)\n"
-"  --latency        Enter a special mode continuously sampling latency\n"
-"  --slave          Simulate a slave showing commands received from the master\n"
-"  --pipe           Transfer raw Redis protocol from stdin to server\n"
-"  --bigkeys        Sample Redis keys looking for big keys\n"
-"  --eval <file>    Send an EVAL command using the Lua script at <file>\n"
-"  --help           Output this help and exit\n"
-"  --version        Output version and exit\n"
+"  -h <hostname>       Server hostname (default: 127.0.0.1)\n"
+"  -p <port>           Server port (default: 6379)\n"
+"  -s <socket>         Server socket (overrides hostname and port)\n"
+"  -a <password>       Password to use when connecting to the server\n"
+"  -r <repeat>         Execute specified command N times\n"
+"  -i <interval>       When -r is used, waits <interval> seconds per command.\n"
+"                      It is possible to specify sub-second times like -i 0.1\n"
+"  -n <db>             Database number\n"
+"  -x                  Read last argument from STDIN\n"
+"  -d <delimiter>      Multi-bulk delimiter in for raw formatting (default: \\n)\n"
+"  -c                  Enable cluster mode (follow -ASK and -MOVED redirections)\n"
+"  --raw               Use raw formatting for replies (default when STDOUT is not a tty)\n"
+"  --latency           Enter a special mode continuously sampling latency\n"
+"  --slave             Simulate a slave showing commands received from the master\n"
+"  --pipe              Transfer raw Redis protocol from stdin to server\n"
+"  --bigkeys           Sample Redis keys looking for big keys\n"
+"  --eval <file>       Send an EVAL command using the Lua script at <file>\n"
+"  --auth-file <file>  Password file to use when connecting to the server\n"
+"  --help              Output this help and exit\n"
+"  --version           Output version and exit\n"
 "\n"
 "Examples:\n"
 "  cat /etc/passwd | redis-cli -x set mypasswd\n"
